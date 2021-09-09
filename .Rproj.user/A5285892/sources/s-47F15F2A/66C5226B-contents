@@ -1,9 +1,0 @@
-library("rscc")
-files <- list.files(path="~/syncthing/temp/rscc", pattern="*.R$", full.names = TRUE)
-files <- list.files(path=system.file("examples", package="rscc"), pattern="*.R$", full.names = TRUE)
-
-prgs  <- sourcecode(files, basename=TRUE, minlines=3)
-coeff <- similarity(prgs)            # variables only
-
-g <- as_igraph(coeff, diag=FALSE)
-plot(g, edge.width=1+3*E(g)$weight) # thicker edges have higher similarity coefficients

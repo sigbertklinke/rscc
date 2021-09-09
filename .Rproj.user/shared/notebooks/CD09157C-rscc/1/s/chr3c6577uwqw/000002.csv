@@ -1,9 +1,0 @@
-"0","files <- list.files(system.file(""examples"", package=""rscc""), ""*.R$"", full.names = TRUE)"
-"0","prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)"
-"1","
-"
-"0","simy  <- similarity(prgs, minlen=4)"
-"2","Warnung in similarity(prgs, minlen = 4)"
-"2"," no names found in aa.R, aa1.R
-"
-"0","head(simy)"
