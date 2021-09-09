@@ -1,0 +1,222 @@
+---
+title: "R Source Code Comparision"
+author: 
+- name: "Sigbert Klinke" 
+  email: sigbert@hu-berlin.de
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+vignette: > 
+  %\VignetteIndexEntry{plot.matrix} 
+  %\VignetteEngine{knitr::rmarkdown} 
+  \usepackage[utf8]{inputenc} 
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+library(rscc)
+```
+
+## General
+
+The R source code comparison is based on similarity coefficients on the names used in R programs or expressions. Use cases would be to detect
+
+* similar code sequences or
+* plagiarism amongst students' assignments.
+
+In the first case detecting similar code sequences may lead to better code quality if similar code is embedded in a function rather than in different locations again and again. The second case looks for cheating.
+
+However, the aim is not a perfect detection of similar code sequences but more to give hints where might be similar code sequences.
+
+We have three steps to do:
+
+1. Read in the source code
+2. Compute similarity coefficients
+3. Compare code sequences
+
+## Step 1: Read in source codes
+
+The creators of the package [SimilaR](https://CRAN.R-project.org/package=SimilaR) (R Source Code Similarity Evaluation) provided some example files for testing:
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE)
+names(prgs)
+```
+
+The parameter `basename=TRUE` ensures that names of the list elements are the basename of the `files` and
+not the file names including the path. 
+
+The parameter `silent=TRUE` will suppress the output of the files parsed. If an error appears during parsing then the file is not loaded and considered in the following steps.
+
+If you want to consider expressions rather than the whole R file then you need to set the parameter `minlines`. `sourcecode` checks if an expression has in the source file more than `minlines` lines. 
+If yes then the expression is kept for further analysis. The name of list elements in `prgs` will be then `filename[number]`. For example you could access the expression by name `prgs[["aa.R[1]"]]`.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, minlines=3)
+names(prgs)
+```
+
+## Step 2: Compute similarity coefficients
+
+The next step is to compute similarity coefficients between all source code segments based on names used:
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs)
+head(simy)
+```
+
+This computes the Jaccard coefficients based on the variable names.
+
+The output can be interpreted line by line:
+
+* The variable names used in the files `aa.R` and `aa1.R` are identical. Any variable name used in
+`aa.R` is also used in `aa1.R` and vice versa. 
+* The variable names used in the files `bucketSort1_addLines.R` and `bucketSort1.R` are identical.
+* The variable names used in the files `isPrime2_addLines.R` and `isPrime2.R` are identical.
+* The variable names used in the files `kombinuj1_variables.R` and `kombinuj1.R` are **not** identical. In both files you have 30% overlap of variable names.
+* And so on.
+
+The interpretation will be different if another similarity coefficient is used! But in any case, a higher similarity coefficient will correspond to a larger share of variable names in both files (or expressions).
+
+### `type`
+
+With the `type` parameter you can distinguish between different types of names:
+
+```{r}
+cat(as.character(prgs[[1]]))                       # source code
+all.vars(prgs[[1]])                                # type="v", default
+all.names(prgs[[1]])                               # type="n"
+setdiff(all.names(prgs[[1]]), all.vars(prgs[[1]])) # type="f"
+```
+
+### `minlen` and `ignore.case`
+
+With the `minlen` parameter you can exclude names which are shorther than `minlen`. The default is `minlen=2`, since the name of an index variable in loops consists often of one letter, for example `for (i in 1:n)`. `ignore.case` is either `TRUE`or `FALSE`. If `TRUE` (default) then it holds `"A"=="a"` etc.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs, minlen=4)
+head(simy)
+```
+
+### `same.file`
+
+If you are only interested in differences between files then you can set the similarities between expressions
+to zero if they are in the same file. The use case here is to detect plagiarism in different files.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE, minlines=1)
+simy  <- similarities(prgs)
+attr(simy, "similarity")[1:3,1:3]
+simy  <- similarities(prgs, same.file=FALSE)
+attr(simy, "similarity")[1:3,1:3]
+```
+
+### `coeff` (similarity)
+
+With the parameter `coeff` a specific similarity coefficient can be computed (default: `jaccard`).
+
+If you two sets of unique names `set1`, `set2` and a set `setfull` with predefined names is given then four
+numbers are computed (default: `setfull <- unique(c(set1,set2))`):
+
+```{r, eval=FALSE}
+inset1 <- setfull %in% unique(set1)
+inset2 <- setfull %in% unique(set2)
+p      <- length(setfull)
+n11    <- sum(inset1 & inset2)
+n10    <- sum(inset1 & !inset2)
+n01    <- sum(!inset1 & inset2)
+n00    <- sum(!inset1 & !inset2)
+```
+
+The following coefficients can be computed:
+
+* `braun      = n11/max(n01+n11, n10+n11)`,
+* `dice       = 2*n11/(n01+n10+2*n11)`,
+* `jaccard    = n11/(n01+n10+n11)` (default),
+* `kappa      = 1/(1+p/2*(n01+n10)/(n00*n11-n01*n10))`,
+* `kulczynski = n11/(n01+n10)`,
+* `matching   = (n00+n11)/p`,
+* `ochiai     = n11/sqrt((n11+n10)*(n11+n10))`,
+* `phi        = (n11*n00-n10*n01)/sqrt((n11+n10)*(n11+n10)*(n00+n10)*(n00+n10))`,
+* `russelrao  = n11/p`,
+* `simpson    = n11/min(n01+n11, n10+n11)`,
+* `sneath     = n11/(n11+2*n01+2*n10)`,
+* `tanimoto   = (n11+n00)/(n11+2*n01+2*n10+n00)`, and
+* `yule       = (n11*n00-n01*n10)/(n11*n00-n01*n10)`.
+
+If a coefficient name is not found or a `NaN` is generated then a zero is returned.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs, coeff="m")
+head(simy)
+```
+
+###  `decreasing` and `tol`
+
+The matrix `m` of similarities is checked if it is a symmetric matrix. It is symmetric if for all entries holds `abs(m-t(m))<=tol`; the result is stored in the attribute `symmetrical`. The matrix `m` is transformed 
+in a data frame with the first column the row index, the second column the column index and the third 
+column the similarity coefficient. If `decreasing` is `TRUE` (default) then the data frame is sorted in decreasing order by the third column.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs)
+head(simy)
+```
+
+## Step 3: Get an overview about the results
+
+As a first step have a look to the sorted computed coefficients.
+
+```{r, fig.height=3}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs, type="n", minlen=3)
+stripchart(simy$jaccard, "jitter", pch=19, xlab="Jaccard")
+```
+
+In a second step you can plot the coefficients in a graph where thicker edges corresponding to higher similarity coefficients.
+
+```{r}
+library("igraph")
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs, type="n", minlen=3)
+graph <- as_igraph(simy, diag=FALSE)
+# color all edges wit a large similarity coefficient in red
+E(graph)$color <- ifelse(E(graph)$weight>0.4, "red", "grey")
+plot(graph, edge.width=1+3*E(graph)$weight)
+box()
+```
+
+For graphing the [igraph](https://CRAN.R-project.org/package=igraph) package is used. In `as_igraph` the function`igraph::graph_from_adjacency_matrix` is used. In case of a symmetrical cofficient matrix undirected graphs are used, otherwise a directed graph is used.
+
+## Step 4: Detailled analysis of the source code
+
+The last step is the comparison of the relevant source codes. The command `browse` creates and opens a HTML page with the source codes side by side.
+
+```{r}
+files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
+prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+simy  <- similarities(prgs, type="n", minlen=3)
+if (interactive()) browse(prgs, simy, sum(simy$jaccard>0.4))
+```
+
+![](browse.png)
