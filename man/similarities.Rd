@@ -8,14 +8,8 @@
 sims(...)
 
 similarities(
-  prgs,
-  type = c("vars", "funs", "names"),
+  docs,
   all = FALSE,
-  ignore.case = TRUE,
-  minlen = 2,
-  decreasing = TRUE,
-  tol = 1e-09,
-  same.file = TRUE,
   coeff = c("jaccard", "braun", "dice", "hamann", "kappa", "kulczynski", "ochiai",
     "phi", "russelrao", "matching", "simpson", "sneath", "tanimoto", "yule")
 )
@@ -23,21 +17,9 @@ similarities(
 \arguments{
 \item{...}{all parameters in \code{sims} are given to \code{similarities}}
 
-\item{prgs}{sourcecode object}
-
-\item{type}{character: either \code{"vars"}, \code{"funs"}, \code{"names"} (default: \code{"vars"})}
+\item{docs}{document object}
 
 \item{all}{logical: should the similarity coefficients computed based on all sourcecode objects or just the two considered (default: \code{FALSE})}
-
-\item{ignore.case}{logical: If TRUE, case is ignored for computing (default: \code{TRUE})}
-
-\item{minlen}{integer: minimal name length to be considered (default: \code{2})}
-
-\item{decreasing}{logical: should the sort order be increasing or decreasing (default: \code{TRUE})}
-
-\item{tol}{numeric: tolerance used to detect if matrix is symmetrical (default: \code{1e-9})}
-
-\item{same.file}{logical: should be similarities kept if in same file or set to zero (default: \code{TRUE})}
 
 \item{coeff}{character: coefficient to compute (default: \code{"jaccard"}), abbreviations can be used}
 }
@@ -45,22 +27,14 @@ similarities(
 a data frame with the results
 }
 \description{
-\code{sims} and \code{similarities} compute both for each pair of sourcecode objects
-the similarity coefficients and returns a data frame with coefficients in decreasing order.
-A larger coefficient means a greater similarity. If
-\itemize{
-\item \code{type=="vars"} then the results of \code{all.vars(.)},
-\item \code{type=="funs"} then the results of \code{setdiff(all.names(.), all.vars(.)}, and
-\item \code{type=="names"} then the results of \code{all.names(.)}
-}
-are used.
+\code{sims} and \code{similarities} both calculate for each pair of source code objects
+the similarity coefficients and return a data frame with the coefficients in descending order.
+A larger coefficient means a greater similarity.
 }
 \examples{
 # example files are taken from https://CRAN.R-project.org/package=SimilaR
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names=TRUE)
-prgs  <- sourcecode(files)
-names(prgs) <- basename(names(prgs))
-similarities(prgs)            # variables only
-similarities(prgs, type="f")  # functions only
-similarities(prgs, type="n")  # all names
+prgs  <- sourcecode(files, basename=TRUE)
+docs  <- documents(prgs)
+similarities(docs)
 }

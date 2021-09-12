@@ -1,11 +1,11 @@
 Package: rscc
 Type: Package
 Title: R Source Code Similarity Evaluation by Similarity Coefficients 
-Version: 0.1.0
-Date: 2021-09-09
+Version: 0.2.0
+Date: 2021-09-11
 Authors@R: 
   c(person("Sigbert", "Klinke", email="sigbert@hu-berlin.de", role=c("aut", "cre")))
-Description: Compares R source codes by variable and/or functions names. Similar source codes should deliver similarity coefficients near one. Since neither the frequency nor the order of the used names is considered, a manual inspection of the R source code is required to check for similarity. Possible use cases include detection of code clones for improving
+Description: Evaluates R source codes by variable and/or functions names. Similar source codes should deliver similarity coefficients near one. Since neither the frequency nor the order of the used names is considered, a manual inspection of the R source code is required to check for similarity. Possible use cases include detection of code clones for improving
     software quality and of plagiarism amongst students' assignments.
 License: GPL-3
 URL: https://github.com/sigbertklinke/rscc (development version)
@@ -13,7 +13,8 @@ Imports:
   crayon,
   formatR,
   highlight,
-  igraph
+  igraph,
+  tm
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1

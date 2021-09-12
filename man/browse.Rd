@@ -4,14 +4,14 @@
 \alias{browse}
 \title{browse}
 \usage{
-browse(prgs, simdf, n = sum(simdf[, 3] > 0), width.cutoff = 60, css = NULL)
+browse(prgs, simdf, n = (simdf[, 3] > 0), width.cutoff = 60, css = NULL)
 }
 \arguments{
 \item{prgs}{sourcecode object}
 
 \item{simdf}{similarity object}
 
-\item{n}{integer: number of comparisons to show (default: \code{sum(simf[,3]>0)})}
+\item{n}{integer: comparisons to show (default: \code{simf[,3]>0})}
 
 \item{width.cutoff}{integer: an integer in [20, 500]: if a line's character length is at or over this number, the function will try to break it into a new line (default: \code{60})}
 
@@ -21,12 +21,14 @@ browse(prgs, simdf, n = sum(simdf[, 3] > 0), width.cutoff = 60, css = NULL)
 invisibly the name of the temporary HTML file
 }
 \description{
-Creates a temporary HTML file and opens it into a browser.
+Creates a temporary HTML file with source codes and opens it into a browser using \code{browseURL}.
+Note that the source code is reformatted.
 }
 \examples{
 # example files are taken from https://CRAN.R-project.org/package=SimilaR
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names=TRUE)
 prgs  <- sourcecode(files)
-simil <- similarities(prgs)
-if (interactive()) browse(prgs, simil)
+simm  <- similarities(documents(prgs))
+simdf <- matrix2dataframe(simm)
+if (interactive()) browse(prgs, simdf)
 }

@@ -25,8 +25,9 @@ similarity_coeff(
 a numeric similarity coefficient
 }
 \description{
-Computes a similarity coefficient based on the unique elements \code{set1} and \code{set2} in relation to \code{setfull}.
-If \code{setfull} is \code{NULL} then \code{setfull} is set to \code{unique(c(set1, set2))}.
+Computes a similarity coefficient based on the unique elements \code{set1} and \code{set2}
+in relation to \code{setfull}. If \code{setfull} is \code{NULL} then \code{setfull} is set
+to \code{unique(c(set1, set2))}. For more details, see the vignette \code{vignette("rscc")}.
 }
 \examples{
 s1 <- 1:3

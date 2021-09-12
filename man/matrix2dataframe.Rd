@@ -4,28 +4,42 @@
 \alias{matrix2dataframe}
 \title{matrix2dataframe}
 \usage{
-matrix2dataframe(m, decreasing = TRUE, tol = 1e-09)
+matrix2dataframe(
+  m,
+  decreasing = TRUE,
+  tol = 100 * .Machine$double.eps,
+  tol1 = 8 * tol,
+  ...
+)
 }
 \arguments{
 \item{m}{numeric: a matrix of values}
 
 \item{decreasing}{logical: should the sort order be increasing or decreasing (default: \code{TRUE})}
 
-\item{tol}{numeric: tolerance used to detect if matrix is symmetrical (default: \code{1e-9})}
+\item{tol}{numeric scalar >= 0.  Smaller differences are not
+    considered, see \code{\link[base]{all.equal.numeric}}.}
+
+\item{tol1}{numeric scalar >= 0.  \code{isSymmetric.matrix()}
+    \sQuote{pre-tests} the first and last few rows for fast detection of
+    \sQuote{obviously} asymmetric cases with this tolerance.  Setting it
+    to length zero will skip the pre-tests.}
+
+\item{...}{further arguments passed to methods; the matrix method
+    passes these to \code{\link[base]{all.equal}}.  If the row and column
+    names of \code{object} are allowed to differ for the symmetry check
+    do use \code{check.attributes = FALSE}!}
 }
 \value{
 a data frame with an attribute \code{matrix} with \code{m}
 }
 \description{
 Converts a numeric matrix to a data frame with decreasing or increasing values:
-first column row index, second column col index and third column the value.
-If the matrix is symmetrical then just the upper triangle will be considered.
+First column row index, second column col index and third column the value.
+If the matrix is symmetric, only the upper triangle is taken into account.
 }
 \examples{
 # non-symmetric
 x <- matrix(runif(9), ncol=3)
-matrix2dataframe(x)
-# symmetric
-x <- x+t(x)
 matrix2dataframe(x)
 }
