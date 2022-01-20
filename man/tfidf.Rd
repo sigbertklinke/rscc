@@ -21,4 +21,9 @@ files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names 
 prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
 docs  <- documents(prgs)
 tfidf(docs)
+# further steps
+# m  <- tfidf(docs)
+# df <- matrix2dataframe(m)
+# head(df, n=20)
+# browse(prgs, df, n=5)
 }

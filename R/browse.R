@@ -40,18 +40,27 @@ browse <- function(prgs, simdf, n=(simdf[,3]>0), width.cutoff=60, css=NULL) {
                    as.character(Sys.time()), style)
   sind <- which(show)
   html <- c(html, "<p>", paste0("[<a href=\"#", sind, "\">", sprintf("%.2f", simdf[sind,3]), "</a>]", collapse="&nbsp; "), "</p>")
+  html <- c(html, "<b>Note:</b> For better readability the program codes has been send through <a href=\"https://CRAN.R-project.org/package=formatR\"><tt>formatR::tidy_source</tt></a> and <a href=\"https://CRAN.R-project.org/package=highlight\"><tt>highlight::higlight</tt></a>!")
+  call <- attr(simdf, "call")
+  if (!is.null(call)) html <- c(html, "<pre>", call, '</pre>')
   tmpfile <- tempfile(fileext=".R")
   for (i in 1:nsimdf) {
     if (show[i]) {
       html <- c(html, sprintf("<h2 id=\"%.0f\">%s = %f</h2>", i, names(simdf)[3], simdf[i,3]),
                 "<table width=\"100%\">",
                 sprintf("<tr bgcolor=\"darkgrey\"><th>%s</th><th>%s</th></tr>", simdf[i,1], simdf[i,2]))
-      src1 <- tidy_source(text=as.character(prgs[[simdf[i,1]]]), output=FALSE,  width.cutoff=width.cutoff)
-      writeLines(src1$text.tidy, tmpfile)
-      src1 <- highlight(tmpfile, output=NULL, renderer = renderer_html(document=FALSE))
-      src2 <- tidy_source(text=as.character(prgs[[simdf[i,2]]]), output=FALSE,  width.cutoff=width.cutoff)
-      writeLines(src2$text.tidy, tmpfile)
-      src2 <- highlight(tmpfile, output=NULL, renderer = renderer_html(document=FALSE))
+      err <- try({
+        src1 <- tidy_source(text=as.character(prgs[[simdf[i,1]]]), output=FALSE,  width.cutoff=width.cutoff)
+        writeLines(src1$text.tidy, tmpfile)
+        src1 <- highlight(tmpfile, output=NULL, renderer = renderer_html(document=FALSE))
+      }, silent = TRUE)
+      if ("try-error" %in% class(err)) src1 <- paste0('<pre style="color:red;">', as.character(err), '<pre>')
+      err <- try({
+        src2 <- tidy_source(text=as.character(prgs[[simdf[i,2]]]), output=FALSE,  width.cutoff=width.cutoff)
+        writeLines(src2$text.tidy, tmpfile)
+        src2 <- highlight(tmpfile, output=NULL, renderer = renderer_html(document=FALSE))
+      })
+      if ("try-error" %in% class(err)) src2 <- paste0('<pre style="color:red;">', as.character(err), '<pre>')
       html <- c(html, sprintf("<tr><td valign=\"top\">%s</td><td valign=\"top\">%s</td></tr></table>",
                               paste0(src1, collapse=""), paste0(src2, collapse="")))
     }

@@ -27,4 +27,5 @@ install_github("sigbertklinke/rscc")
 ```
 
 # History
+  * 2022-01-20 version 0.2.1, improved documentation & HTML output, faster computation
   * 2021-09-09 version 0.1.0

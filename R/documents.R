@@ -34,5 +34,5 @@ documents <- function(prgs,  type=c("vars", "funs", "names"), ignore.case=TRUE, 
     if (ignore.case) docs[[file]]   <- tolower(docs[[file]])
     if (minlen>1) docs[[file]]      <- docs[[file]][nchar(docs[[file]])>=minlen]
   }
-  structure(docs, class=c("documents", class(docs)))
+  structure(docs, class=c("documents", class(docs)), call=deparse(match.call()))
 }

@@ -23,24 +23,28 @@ sims <- function(...) { similarities(...) }
 #' prgs  <- sourcecode(files, basename=TRUE)
 #' docs  <- documents(prgs)
 #' similarities(docs)
+#' # further steps
+#' # m  <- similarities(docs)
+#' # df <- matrix2dataframe(m)
+#' # head(df, n=20)
+#' # browse(prgs, df, n=5)
 similarities <- function (docs, all=FALSE,
                           coeff=c("jaccard", "braun", "dice", "hamann", "kappa", "kulczynski", "ochiai",
                                   "phi", "russelrao", "matching", "simpson", "sneath", "tanimoto", "yule")) {
   stopifnot ("documents" %in% class(docs))
-  coeff   <- match.arg(coeff)
-  allwords <- NULL
-  if (all) {
-    for (i in seq(docs)) allwords <- c(allwords, docs[[i]])
-  }
-  nvars <- lengths(docs)
+  coeff <- match.arg(coeff)
+  udocs <- lapply(docs, unique)
+  nvars <- lengths(udocs)
   if (any(nvars==0)) warning("no names found in ", paste0(names(docs)[nvars==0], collapse=", "))
-  n   <- length(docs)
-  sim <- matrix(0, ncol=n, nrow=n)
+  if (all) allwords <- unique(unlist(udocs))
+  n     <- length(udocs)
+  sim   <- matrix(0, ncol=n, nrow=n)
   for (i in 1:n) {
-    for (j in 1:n) {
-      sim[i, j] <- similarity_coeff(docs[[i]], docs[[j]], allwords, coeff=coeff)
+    for (j in i:n) { # assume symmetry of coefficients
+      if (!all) allwords <- unique(c(udocs[[i]], udocs[[j]]))
+      sim[i, j] <- sim[j, i] <- sim_coeff(udocs[[i]], udocs[[j]], allwords, coeff)
     }
   }
-  colnames(sim) <- rownames(sim) <- names(docs)
-  structure(sim, class=c("matrix", class(sim)), similarity=sim, coeff=coeff)
+  colnames(sim) <- rownames(sim) <- names(udocs)
+  structure(sim, class=c("matrix", class(sim)), similarity=sim, coeff=coeff, call=c(attr(docs, "call"), deparse(match.call())))
 }

@@ -7,14 +7,14 @@
 \usage{
 sourcecode(x, ...)
 
-\method{sourcecode}{default}(x, basename = FALSE, silent = FALSE, minlines = -1, ...)
+\method{sourcecode}{default}(x, title = x, silent = FALSE, minlines = -1, ...)
 }
 \arguments{
 \item{x}{character: filenames}
 
 \item{...}{unused}
 
-\item{basename}{logical: should only the basename used for sourcecode objects (default: \code{FALSE})}
+\item{title}{character: vector of program titles (default: \code{x})}
 
 \item{silent}{logical: should the report of messages be suppressed (default: \code{FALSE})}
 
@@ -24,7 +24,7 @@ sourcecode(x, ...)
 a sourcecode object
 }
 \description{
-reads and parses files with R source code
+Reads and parses files with R source code.
 }
 \examples{
 # example files are taken from https://CRAN.R-project.org/package=SimilaR

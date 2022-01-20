@@ -14,6 +14,11 @@
 #' prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
 #' docs  <- documents(prgs)
 #' tfidf(docs)
+#' # further steps
+#' # m  <- tfidf(docs)
+#' # df <- matrix2dataframe(m)
+#' # head(df, n=20)
+#' # browse(prgs, df, n=5)
 tfidf <- function(docs) {
   # from https://www.r-bloggers.com/2013/03/build-a-search-engine-in-20-minutes-or-less/
   get.tf.idf.weights <- function(tf.vec, df, N.docs) {
@@ -35,5 +40,5 @@ tfidf <- function(docs) {
   tfidf.matrix <- t(apply(term.doc.matrix, c(1), FUN = get.weights.per.term.vec, N.docs=length(docs)))
   colnames(tfidf.matrix) <- colnames(term.doc.matrix)
   tfidf        <- scale(tfidf.matrix, center = FALSE, scale = sqrt(colSums(tfidf.matrix^2)))
-  structure(crossprod(tfidf), tfidf=tfidf.matrix)
+  structure(crossprod(tfidf), tfidf=tfidf.matrix, coeff='tfidf', call=c(attr(docs, "call"), deparse(match.call())))
 }

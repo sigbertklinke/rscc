@@ -33,5 +33,5 @@ matrix2dataframe <- function(m, decreasing=TRUE, tol=100*.Machine$double.eps, to
     ret[ind] <- NA
   }
   if (!is.null(attr(m, "coeff"))) names(df)[3] <- attr(m, "coeff")
-  structure(as.data.frame(df), matrix=m)
+  structure(as.data.frame(df), matrix=m, call=attr(m, "call"))
 }

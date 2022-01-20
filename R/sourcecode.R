@@ -4,9 +4,9 @@ sourcecode <- function(x, ...) UseMethod("sourcecode")
 
 #' @rdname sourcecode
 #' @title sourcecode
-#' @description reads and parses files with R source code
+#' @description Reads and parses files with R source code.
 #' @param x character: filenames
-#' @param basename logical: should only the basename used for sourcecode objects (default: \code{FALSE})
+#' @param title character: vector of program titles (default: \code{x})
 #' @param silent logical: should the report of messages be suppressed (default: \code{FALSE})
 #' @param minlines integer: only expressions with \code{minlines} lines are considered (default: \code{-1}), if \code{minlines<0} then whole files will be considered
 #' @param ... unused
@@ -19,12 +19,16 @@ sourcecode <- function(x, ...) UseMethod("sourcecode")
 #' # example files are taken from https://CRAN.R-project.org/package=SimilaR
 #' files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names=TRUE)
 #' prgs  <- sourcecode(files)
-sourcecode.default <- function(x, basename=FALSE, silent=FALSE, minlines=-1, ...) {
+sourcecode.default <- function(x, title=x, silent=FALSE, minlines=-1, ...) {
+  stopifnot(length(x)==length(title))
+  if (anyDuplicated(title)) warning("Duplicate file titles")
+  names(title) <- x
+  #
   parsed <- list()
   cat("\n")
   enclist <- iconvlist()
   for (file in x) {
-    bfile <- if (basename) basename(file) else file
+    bfile      <- title[file]
     parsedfile <- try(parse(file), silent=TRUE)
     if ("try-error" %in% class(parsed[[bfile]])) {
       if (!silent) cat(red(file, "\n", parsed[[bfile]]), "\n")

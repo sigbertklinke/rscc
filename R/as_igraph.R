@@ -13,7 +13,7 @@
 #'
 #' @examples
 #' files <- list.files(path=system.file("examples", package="rscc"), pattern="*.R$", full.names = TRUE)
-#' prgs  <- sourcecode(files, basename=TRUE)
+#' prgs  <- sourcecode(files, title=basename(files))
 #' docs  <- documents(prgs)
 #' simm  <- similarities(docs)
 #' # a similarity coefficients equal to zero does not create an edge!

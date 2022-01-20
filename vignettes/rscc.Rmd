@@ -9,7 +9,7 @@ output:
     toc: true
     toc_depth: 4
 vignette: > 
-  %\VignetteIndexEntry{plot.matrix} 
+  %\VignetteIndexEntry{rscc} 
   %\VignetteEngine{knitr::rmarkdown} 
   \usepackage[utf8]{inputenc} 
 ---
@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup, include=FALSE}
-library(rscc)
+library("rscc")
 ```
 
 ## General
@@ -44,7 +44,33 @@ We have several steps to take:
 4. get an overview of the calculated similarities
 5. compare code sequences
 
-A thanks to Masatoshi Nishimura to his blog post [The Best Document Similarity Algorithm: A Beginner’s Guide](https://towardsdatascience.com/the-best-document-similarity-algorithm-in-2020-a-beginners-guide-a01b9ef8cf05) which is very inspriring.
+A thanks to Masatoshi Nishimura to his blog post [The Best Document Similarity Algorithm: A Beginner’s Guide](https://towardsdatascience.com/the-best-document-similarity-algorithm-in-2020-a-beginners-guide-a01b9ef8cf05) which is very inspiring.
+
+### Example 1: Comparing whole files
+
+```{r, eval=FALSE}
+files <- ... # get file names from somehere, e.g. list.files()
+prgs  <- sourcecode(files, title=basename(files))
+docs  <- documents(prgs, type="names")
+sim   <- similarities(docs)  # you may use alternatively tfidf()
+dfsim <- matrix2dataframe(sim)
+head(dfsim, n=25)
+browse(prgs, dfsim, n=6)     # creates and opens a HTML file
+```
+
+### Example 2: Comparing expressions in files
+
+```{r, eval=FALSE}
+files <- ... # get file names from somehere, e.g. list.files()
+# load all expressions with at least `minlines` lines
+prgs  <- sourcecode(files, title=basename(files), minlines=0) 
+docs  <- documents(prgs, type="names")
+sim   <- similarities(docs)  # you may use alternatively tfidf()
+sim   <- same_file(sim)      # do not compare expressions within one file
+dfsim <- matrix2dataframe(sim)
+head(dfsim, n=25)
+browse(prgs, dfsim, n=6)     # creates and opens a HTML file
+```
 
 ## Step 1: Reading in source codes
 
@@ -52,27 +78,26 @@ The makers of the package [SimilaR](https://CRAN.R-project.org/package=SimilaR) 
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE)
+prgs  <- sourcecode(files, title=basename(files))
 names(prgs)
 ```
 
-The parameter `basename=TRUE` ensures that names of the list elements are the basename of the `files` and
-not the file names including the path. 
+The parameter `title` sets another title for the program instead of `files`.
 
-The parameter `silent=TRUE` suppresses the output of the parsed files. If an error occurs during parsing, the file will not be loaded and will be included in the following steps.
+The parameter `silent=TRUE` suppresses the output of the parsed files. If an error occurs during parsing, the file will not be loaded and will not be included in the following steps.
 
 If you want to consider expressions and not the whole R file, you have to set the parameter `minlines`. `sourcecode` checks whether an expression in the source file has more than `minlines` lines. 
-If so, the expression is kept for further analysis. The name of the list items in `prgs` is then `filename[number]`. For example, you could access the expression named `prgs[["aa.R[1]"]]`.
+If so, the expression is kept for further analysis. The name of the list items in `prgs` is then `title[number]`. For example, you could access the expression named `prgs[["aa.R[1]"]]`.
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, minlines=3, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), minlines=3, silent=TRUE)
 names(prgs)
 ```
 
 ## Step 2: Create documents
 
-The next step is to create documents, based on the names of variables, functions and operators from the parsed source codes-
+The next step is to create documents, based on the names of variables, functions and operators from the parsed source codes.
 
 ```{r}
 docs <- documents(prgs)
@@ -80,8 +105,7 @@ docs <- documents(prgs)
 freq_table(docs)[1:8,1:8]
 ```
 
-With the `type` parameter you can distinguish between different types of names and with `ignore.case`
-the names are either treated case-insensitive or not.
+With the `type` parameter you can distinguish between different types of names and with `ignore.case` the names are either treated case-insensitive or not.
 
 ### `type`
 
@@ -96,7 +120,7 @@ setdiff(all.names(prgs[[1]]), all.vars(prgs[[1]])) # type="f"
 
 ### `minlen` and `ignore.case`
 
-With the parameter `minlen` you can exclude names that are shorter than `minlen`. The default is `minlen=2` because the name of an index variable in loops often consists of only one letter, for example `for (i in 1:n)`. `ignore.case` is either `TRUE` or `FALSE`. If `TRUE` (default), then names wil case-insensitive, otherwuse case-sensitive.
+With the parameter `minlen` you can exclude names that are shorter than `minlen`. The default is `minlen=2` because the name of an index variable in loops often consists of only one letter, for example `for (i in 1:n)`. `ignore.case` is either `TRUE` or `FALSE`. If `TRUE` (default), then names will case-insensitive, otherwise case-sensitive.
 
 ## Step 3a: Calculate similarity coefficients
 
@@ -107,7 +131,7 @@ all source text segments based on the names used:
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs)
 similarities(docs)[1:8,1:8]
 ```
@@ -156,7 +180,7 @@ If a coefficient name is not found or a `NaN` is generated then a zero is return
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs)
 similarities(docs, coeff="m")[1:8,1:8]
 ```
@@ -167,7 +191,7 @@ Another possibility to find similar source codes as cosine of angles of term fre
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs)
 tfidf(docs)[1:8,1:8]
 ```
@@ -176,17 +200,17 @@ The attribute `tfidf` of the result matrix contains the term frequency–inverse
 
 ## Step 4: Get an overview about the results
 
-Since the matrix of coefficients can not easily be overviewed we have must transform them for visualiziation.
+Since the matrix of coefficients can not easily be overviewed we have must transform them for visualisation.
 
 ### `matrix2dataframe`
 
 
 With `matrix2dataframe` you transform the matrix of coefficients to a data frame where the first column 
-is the row index, the scrond column the column index and the third column the the matrix entry.
+is the row index, the second column the column index and the third column the the matrix entry.
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs)
 simm  <- similarities(docs, coeff="m")
 simdf <- matrix2dataframe(simm)
@@ -219,7 +243,7 @@ In a second step you can plot the coefficients in a diagram, where thicker edges
 ```{r}
 library("igraph")
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs, type="n", minlen=3)
 simm  <- similarities(docs)
 graph <- as_igraph(simm, diag=FALSE)
@@ -238,7 +262,7 @@ to some predefined value (default: zero) if they are in the same file. The use c
 
 ```{r}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE, minlines=1)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE, minlines=1)
 docs  <- documents(prgs)
 simm  <- similarities(docs)
 simm[1:3,1:3]
@@ -252,7 +276,7 @@ The last step is to compare the relevant source codes. The command `browse` crea
 
 ```{r, eval=FALSE}
 files <- list.files(system.file("examples", package="rscc"), "*.R$", full.names = TRUE)
-prgs  <- sourcecode(files, basename=TRUE, silent=TRUE)
+prgs  <- sourcecode(files, title=basename(files), silent=TRUE)
 docs  <- documents(prgs, type="n", minlen=3)
 simdf <- matrix2dataframe(similarities(docs))
 if (interactive()) browse(prgs, simdf, simdf[,3]>0.4)
